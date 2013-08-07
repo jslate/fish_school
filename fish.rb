@@ -4,32 +4,36 @@ require './angle_range'
 
 class Fish
 
-  attr_reader :x, :y, :angle, :color
+  attr_accessor :x, :y, :angle, :color, :repel_zone, :parallel_zone, :attract_zone, :minumum_moves_between_turns,
+                :bounce_off_edges, :speed, :field_of_vision, :search_frequency, :unpredictability, :image
 
-  def initialize(window, config)
-    @window = window
+  def self.add_to_window(window, count, &block)
+    fishes = 1.upto(count).map do
+      fish = Fish.new
+      fish.x = rand(window.width)
+      fish.y = rand(window.height)
+      fish.angle = rand(360) + 1
+      fish.color = 'yellow'
+      fish.repel_zone = 30
+      fish.parallel_zone = 90
+      fish.attract_zone = 120
+      fish.minumum_moves_between_turns = 10
+      fish.bounce_off_edges = true
+      fish.speed = 4
+      fish.field_of_vision = 270
+      fish.search_frequency = 50
+      fish.unpredictability = 0
+      block.call(fish)
+      fish.image = Gosu::Image.new(window, "media/#{fish.color}-fish.png", false)
+      window.add_fish(fish)
+    end
+  end
 
-    @x = config[:x] || rand(@window.width)
-    @y = config[:y] || rand(@window.height)
-    @angle = config[:angle] || rand(360)
-
-
-    @repel_zone = config[:repel_zone] || 50
-    @parallel_zone = config[:parallel_zone] || 60
-    @attract_zone = config[:attract_zone] || 70
-    @minumum_moves_between_turns = config[:minumum_moves_between_turns] || 1
-    @bounce_off_edges = config[:bounce_off_edges] || true
-    @speed = config[:speed] || 1
-    @field_of_vision = config[:field_of_vision] || 270
-    @search_frequency = config[:search_frequency] || 50
-    @unpredictability = config[:unpredictability]  || 0 # 0 - 1000 scale
-    @color = config[:color] || 'yellow'
-
-    @image = Gosu::Image.new(@window, "media/#{@color}-fish.png", false)
-
+  def initialize
     @moves_since_turned = 0
     @just_turned = false
     @scattering = false
+    @moves_since_scattered = 0
   end
 
   def see(closest_fish)
@@ -67,14 +71,29 @@ class Fish
     end
   end
 
-  def move(fishes)
+  def scatter
+    @scattering = true
+  end
 
-    if (0..@unpredictability).include?(rand(1000))
-      turn_to rand(360)
+  def move(fishes, window)
+
+    if @scattering
+      @moves_since_scattered += 1
+      turn_to rand(360) if @moves_since_scattered == 1
+      deal_with_edge(window)
+      if @moves_since_scattered == 300
+        @scattering = false
+        @moves_since_scattered = 0
+      end
     else
-      deal_with_edge
-      closest_fish = get_closest_fish(fishes)
-      see(closest_fish) if closest_fish && can_turn?
+      if (0..@unpredictability).include?(rand(1000))
+        turn_to rand(360)
+      else
+        deal_with_edge(window)
+        closest_fish = get_closest_fish(fishes)
+        see(closest_fish) if closest_fish && can_turn?
+      end
+
     end
 
     @angle = AngleRange::normalize(@angle)
@@ -104,23 +123,23 @@ class Fish
     @just_turned = true
   end
 
-  def deal_with_edge
+  def deal_with_edge(window)
     if @bounce_off_edges
-      if @x > @window.width && AngleRange.new(0, 180).include?(@angle)
-        @angle = 270 - (@angle - 90)
+      if @x > window.width && AngleRange.new(0, 180).include?(@angle)
+        turn_to(270 - (@angle - 90))
       end
       if @x < 0  && AngleRange.new(180, 0).include?(@angle)
-        @angle = 90 - (@angle - 270)
+        turn_to(90 - (@angle - 270))
       end
       if @y < 0 && AngleRange.new(270, 90).include?(@angle)
-        @angle = 180 - (@angle - 360)
+        turn_to(180 - (@angle - 360))
       end
-      if @y > @window.height && AngleRange.new(90, 270).include?(@angle)
-        @angle = 360 - (@angle - 180)
+      if @y > window.height && AngleRange.new(90, 270).include?(@angle)
+        turn_to(360 - (@angle - 180))
       end
     else
-      @x %= @window.width
-      @y %= @window.height
+      @x %= window.width
+      @y %= window.height
     end
   end
 

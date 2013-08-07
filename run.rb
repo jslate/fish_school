@@ -1,47 +1,25 @@
 require './game_window'
 
+window = GameWindow.new()
 
-yellows = {
-  :fish_count => 10,
-  :color => 'yellow',
-  :repel_zone => 50,
-  :parallel_zone => 70,
-  :attract_zone => 90,
-  :minumum_moves_between_turns => 10,
-  :bounce_off_edges => false,
-  :speed => 1,
-  :field_of_vision => 270,
-  :search_frequency => 50,
-  :unpredictability => 0 # 0 - 1000 scale
-}
+Fish.add_to_window(window, 30) do |fish|
+  fish.color = 'green'
+end
 
-greens = {
-  :fish_count => 15,
-  :color => 'green',
-  :repel_zone => 50,
-  :parallel_zone => 80,
-  :attract_zone => 200,
-  :minumum_moves_between_turns => 10,
-  :bounce_off_edges =>true,
-  :speed => 2,
-  :field_of_vision => 270,
-  :search_frequency => 50,
-  :unpredictability => 0 # 0 - 1000 scale
-}
+Fish.add_to_window(window, 10) do |fish|
+  fish.color = 'yellow'
+  fish.speed = 3
+  fish.repel_zone = 50
+  fish.parallel_zone = 60
+  fish.attract_zone = 70
+end
 
-purples = {
-  :fish_count => 15,
-  :color => 'purple',
-  :repel_zone => 40,
-  :parallel_zone => 60,
-  :attract_zone => 120,
-  :minumum_moves_between_turns => 5,
-  :bounce_off_edges =>true,
-  :speed => 4,
-  :field_of_vision => 270,
-  :search_frequency => 50,
-  :unpredictability => 0 # 0 - 1000 scale
-}
+Fish.add_to_window(window, 10) do |fish|
+  fish.color = 'purple'
+  fish.speed = 3
+  fish.repel_zone = 80
+  fish.parallel_zone = 100
+  fish.attract_zone = 110
+end
 
-window = GameWindow.new([purples, greens, yellows])
 window.show
